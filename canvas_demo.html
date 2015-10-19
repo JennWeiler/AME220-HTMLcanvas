@@ -30,6 +30,95 @@
 	var crop_x;
 	var crop_y;
 	
+	
+	function decreaseSize(){
+		var centerX = img_x + (w2/2);
+		var centerY = img_y + (h2/2);
+		
+		var resizer = .9;
+		w2 *= resizer;
+		h2 *= resizer;
+		
+		img_x = centerX - (w2/2);
+		img_y = centerY - (h2/2);
+		
+		drawCanvas();
+	}
+	
+	function increaseSize(){
+		// find center
+		var centerX = img_x + (w2/2);
+		var centerY = img_y + (h2/2);
+		
+		var resizer = 1/.9;
+		w2 *= resizer;
+		h2 *= resizer;
+		
+		img_x = centerX - (w2/2);
+		img_y = centerY - (h2/2);
+		
+		drawCanvas();
+	}
+	
+	function moveLeft(){
+	   img_x -= (w2/30);
+	   drawCanvas();	
+	}
+	function moveRight(){
+		img_x += (w2/30);
+		drawCanvas();
+		
+	}
+	function moveUp(){
+		img_y -= (h2/30);
+		drawCanvas();
+	}
+	function moveDown(){
+		img_y += (h2/30);
+		drawCanvas();
+		
+	}
+	
+	function drawCanvas(){
+		
+		// gradient
+		var grd = ctx.createLinearGradient(0,0,  0, MAX_HEIGHT  );
+		grd.addColorStop(0, "rgb(100, 100, 100)");
+		grd.addColorStop(1, "rgb(200, 100, 150)");
+		
+		ctx.fillStyle = grd;
+		ctx.fillRect(0,0, MAX_WIDTH, MAX_HEIGHT);
+		
+		
+		ctx.globalAlpha = 0.3;
+		
+		ctx.drawImage(img, img_x, img_y, w2, h2);
+		
+		ctx.globalAlpha = 1;
+		
+		// draw box around cropped area
+		ctx.strokeRect(crop_x, crop_y, crop_width, crop_height );
+		
+		// funnest part ever
+		// draw the part of the image that is inside the rectangle in side the rectangle
+		
+						// take distance from corner to edge and scale to image size
+						//((w2-crop_x)/2)  * (img.width/w2);
+		var imgCroppedX = ((crop_x-img_x)/w2) * img.width;
+		var imgCroppedY = ((crop_y-img_y)/h2) * img.height;
+		var imgCroppedWid = crop_width * (img.width / w2);
+		var imgCroppedHei = crop_height * (img.height / h2);
+		
+		ctx.drawImage(img , imgCroppedX  ,  imgCroppedY ,  imgCroppedWid , imgCroppedHei , crop_x, crop_y, crop_width, crop_height  );
+		
+		
+		var base64St = canvas.toDataURL("image/png");
+        document.getElementById("imagePreview").src = base64St;
+        document.getElementById("imagePreview").style.height = MAX_HEIGHT + "px";
+        document.getElementById("imagePreview").style.width= MAX_WIDTH + "px";
+		
+		
+	}
 
 function imageUploaded()
 {
@@ -73,7 +162,15 @@ function imageUploaded()
                  canvas.height = MAX_HEIGHT;
 				 ctx = canvas.getContext("2d");
 				 
+				document.body.innerHTML += "<button onclick='decreaseSize()'>decrease size</button>"
+				 + "<button onclick='increaseSize()'>increase size</button>"
+				 + "<button onclick='moveLeft()'>move left</button>"
+				 + "<button onclick='moveRight()'>move right</button>"
+				 + "<button onclick='moveUp()'>move up</button>"
+				 + "<button onclick='moveDown()'>move down</button>";
 				
+				
+				drawCanvas();
 				 
 				 
               /*  ctx.drawImage(img, 0, 0, w2, h2);
