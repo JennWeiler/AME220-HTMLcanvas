@@ -79,6 +79,47 @@
 		
 	}
 	
+	var sizes = [ 30, 69, 23, 100];
+	
+	function crop(){
+		var newPicX = ((crop_x-img_x)/w2) * img.width;
+		var newPicY = ((crop_y-img_y)/h2) * img.height;
+		var newPicWid = crop_width * (img.width/w2);
+		var newPicHei = crop_height * (img.height/h2);
+		
+		canvas.width = newPicWid;
+		canvas.height = newPicHei;
+		
+		ctx.drawImage(img, newPicX, newPicY, newPicWid, newPicHei,  0, 0, canvas.width, canvas.height);
+		
+		var croppedImage = new Image();
+		croppedImage.src = canvas.toDataURL();
+		
+		document.body.innerHTML += "<br />";
+		
+		for(var i=0; i<sizes.length; i++){
+			  newImg(croppedImage, sizes[i]);
+		}
+		
+		canvas.width = MAX_WIDTH;
+		canvas.height = MAX_HEIGHT;
+	}
+	
+	function newImg(c_image, size){
+	  canvas.width = size;
+	  canvas.height = size;
+	  ctx.drawImage(c_image, 0, 0, canvas.width, canvas.height);
+	  
+	  document.body.innerHTML += "<img id='image" + size + "' >";
+	  
+	  var base64 = canvas.toDataURL("image/png");
+	  
+	  document.getElementById("image"+size).src = base64;
+	  document.getElementById("image"+size).style.height = size + "px";
+	  document.getElementById("image"+size).style.width = size + "px";
+	
+	}
+	
 	function drawCanvas(){
 		
 		// gradient
@@ -164,10 +205,12 @@ function imageUploaded()
 				 
 				document.body.innerHTML += "<button onclick='decreaseSize()'>decrease size</button>"
 				 + "<button onclick='increaseSize()'>increase size</button>"
-				 + "<button onclick='moveLeft()'>move left</button>"
+				  + "<button onclick='crop()'>crop</button>"
+				/* + "<button onclick='moveLeft()'>move left</button>"
 				 + "<button onclick='moveRight()'>move right</button>"
 				 + "<button onclick='moveUp()'>move up</button>"
-				 + "<button onclick='moveDown()'>move down</button>";
+				 + "<button onclick='moveDown()'>move down</button>"*/
+				 + "<br />Use arrow keys to move image";
 				
 				
 				drawCanvas();
@@ -184,13 +227,85 @@ function imageUploaded()
         FR.readAsDataURL( file.files[0] );
    }
 }
+
+document.onkeydown = checkKey;
+
+function checkKey(e){
+	e = e || window.event;
+	
+	if(e.which == '38'){ // 38 is the keycode for the up arrow
+		  moveUp();
+	}
+	else if(e.which == '40'){ //down arrow
+		moveDown();
+	}
+	else if(e.which == '37') { //left arrow
+		moveLeft();
+	}
+	else if(e.which == '39'){// right arrow
+		moveRight();
+	}
+}
+
+var clicking = false;
+$(document).mousedown(function(){
+	var x = event.x + $(window).scrollLeft();
+	var y = event.y + $(window).scrollTop();
+	
+	var imP = document.getElementById("imagePreview");
+	
+	x -= imP.offsetLeft;
+	y -= imP.offsetTop;
+	
+	if(x > 0 && x < imP.width && y > 0 && y < imP.height){
+		clicking = true;	
+	}
+	
+});
+$(document).mouseup(function(){
+	clicking = false;
+});
+$(document).mousemove(function(){
+	if(clicking == false){ return; }
+	
+	var x = event.x + $(window).scrollLeft();
+	var y = event.y + $(window).scrollTop();
+	
+	var imP = document.getElementById("imagePreview");
+	
+	x -= imP.offsetLeft;
+	y -= imP.offsetTop;
+	
+	resizeImage(x, y);
+	
+});
+
+function resizeImage( x, y){
+	 var centerX = img_x + (w2 /2);
+	 var centerY = img_y + (h2/2);
+	 
+	 var distX = centerX - x;
+	 //console.log(distX);
+	 if(x < centerX){ img_x = x; }
+	 else{  img_x = centerX - distX; }
+	  w2 = distX * 2;
+	  
+	 var distY = centerY - y;
+	 if(y < centerY){ img_y = y; }
+	 else{  img_y = centerY - distY; }
+	  h2 = distY * 2;
+	  
+	  drawCanvas();
+	  
+}
+
 </script>
 
 </head>
 
 <body>
   <input type="file" name="uploadImage" id="uploadImage" onChange="imageUploaded()">
-  <img id="imagePreview">
+  <img draggable="false" id="imagePreview">
 </body>
 
 
