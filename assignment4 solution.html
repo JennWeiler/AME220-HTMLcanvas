@@ -1,0 +1,353 @@
+<html>
+<head>
+<title>
+  Image Resizer
+</title>
+<style>
+  #imagePreview{
+      height: 300px;
+      width: 300px;
+      display: block;
+  }
+</style>
+<script src="jquery-1.11.3.js" type="text/javascript"></script>
+
+<script>
+
+	var canvas;
+	var ctx;
+	var MAX_WIDTH = 512;
+    var MAX_HEIGHT = 512;
+	
+	var img;
+	var w2;
+	var h2;
+	var img_x;
+	var img_y;
+	
+	var crop_width = 72;
+	var crop_height = 72;
+	var crop_x;
+	var crop_y;
+	
+	
+	function decreaseSize(){
+		var centerX = img_x + (w2/2);
+		var centerY = img_y + (h2/2);
+		
+		var resizer = .9;
+		w2 *= resizer;
+		h2 *= resizer;
+		
+		img_x = centerX - (w2/2);
+		img_y = centerY - (h2/2);
+		
+		drawCanvas();
+	}
+	
+	function increaseSize(){
+		// find center
+		var centerX = img_x + (w2/2);
+		var centerY = img_y + (h2/2);
+		
+		var resizer = 1/.9;
+		w2 *= resizer;
+		h2 *= resizer;
+		
+		img_x = centerX - (w2/2);
+		img_y = centerY - (h2/2);
+		
+		drawCanvas();
+	}
+	
+	function moveLeft(){
+	   img_x -= (w2/30);
+	   drawCanvas();	
+	}
+	function moveRight(){
+		img_x += (w2/30);
+		drawCanvas();
+		
+	}
+	function moveUp(){
+		img_y -= (h2/30);
+		drawCanvas();
+	}
+	function moveDown(){
+		img_y += (h2/30);
+		drawCanvas();
+		
+	}
+	
+	var outputSizes = "default";
+	
+	var sizes = [ 30, 69, 23, 100];
+	
+	var sizesiPhone = [512, 1024, 120, 180, 76, 152, 40, 80, 120, 29, 58, 87, 57, 114, 72, 144, 50, 100];
+	var sizesAndroid = [50, 72, 96, 144, 192, 512];
+	
+	function crop(){
+		
+		if((img_x < crop_x) && (img_y < crop_y) && ((img_x + w2) > (crop_x + crop_width)) && ((img_y + h2) > (crop_y + crop_height)) ){
+		var newPicX = ((crop_x-img_x)/w2) * img.width;
+		var newPicY = ((crop_y-img_y)/h2) * img.height;
+		var newPicWid = crop_width * (img.width/w2);
+		var newPicHei = crop_height * (img.height/h2);
+		
+		canvas.width = newPicWid;
+		canvas.height = newPicHei;
+		
+		ctx.drawImage(img, newPicX, newPicY, newPicWid, newPicHei,  0, 0, canvas.width, canvas.height);
+		
+		var croppedImage = new Image();
+		croppedImage.src = canvas.toDataURL();
+		
+		document.body.innerHTML += "<br />";
+		
+		if(outputSizes == "iPhone"){
+				for(var i=0; i<sizesiPhone.length; i++){
+			 		 newImg(croppedImage, sizesiPhone[i]);
+				}
+		
+		}
+		else if(outputSizes == "Android"){
+			    for(var i=0; i<sizesAndroid.length; i++){
+			 		 newImg(croppedImage, sizesAndroid[i]);
+				}
+		}
+		else{ // default
+				for(var i=0; i<sizes.length; i++){
+			 		 newImg(croppedImage, sizes[i]);
+				}
+			
+		}
+		
+		canvas.width = MAX_WIDTH;
+		canvas.height = MAX_HEIGHT;
+		}
+		
+		else{ alert("part of cropped area is empty");}
+	}
+	
+	function newImg(c_image, size){
+	  canvas.width = size;
+	  canvas.height = size;
+	  ctx.drawImage(c_image, 0, 0, canvas.width, canvas.height);
+	  
+	  document.body.innerHTML += "<img id='image" + size + "' >";
+	  
+	  var base64 = canvas.toDataURL("image/png");
+	  
+	  document.getElementById("image"+size).src = base64;
+	  document.getElementById("image"+size).style.height = size + "px";
+	  document.getElementById("image"+size).style.width = size + "px";
+	
+	}
+	
+	function drawCanvas(){
+		
+		// gradient
+		var grd = ctx.createLinearGradient(0,0,  0, MAX_HEIGHT  );
+		grd.addColorStop(0, "rgb(100, 100, 100)");
+		grd.addColorStop(1, "rgb(200, 100, 150)");
+		
+		ctx.fillStyle = grd;
+		ctx.fillRect(0,0, MAX_WIDTH, MAX_HEIGHT);
+		
+		
+		ctx.globalAlpha = 0.3;
+		
+		ctx.drawImage(img, img_x, img_y, w2, h2);
+		
+		ctx.globalAlpha = 1;
+		
+		// draw box around cropped area
+		ctx.strokeRect(crop_x, crop_y, crop_width, crop_height );
+		
+		// funnest part ever
+		// draw the part of the image that is inside the rectangle in side the rectangle
+		
+						// take distance from corner to edge and scale to image size
+						//((w2-crop_x)/2)  * (img.width/w2);
+		var imgCroppedX = ((crop_x-img_x)/w2) * img.width;
+		var imgCroppedY = ((crop_y-img_y)/h2) * img.height;
+		var imgCroppedWid = crop_width * (img.width / w2);
+		var imgCroppedHei = crop_height * (img.height / h2);
+		
+		ctx.drawImage(img , imgCroppedX  ,  imgCroppedY ,  imgCroppedWid , imgCroppedHei , crop_x, crop_y, crop_width, crop_height  );
+		
+		
+		var base64St = canvas.toDataURL("image/png");
+        document.getElementById("imagePreview").src = base64St;
+        document.getElementById("imagePreview").style.height = MAX_HEIGHT + "px";
+        document.getElementById("imagePreview").style.width= MAX_WIDTH + "px";
+		
+		
+	}
+
+function imageUploaded()
+{
+	
+   var file = $('#uploadImage').get(0);
+   if(file.files[0].type.split("/")[0].toLowerCase() != "image"){
+        alert("Incorrect file type -- Please ensure you are uploading an image file.");
+   }
+   if ( file.files && file.files[0] && file.files[0].type.split("/")[0].toLowerCase() === "image") {
+        var FR = new FileReader();
+        FR.onload = function(e) {
+            var data = e.target.result;
+            canvas = document.createElement("canvas");
+            img = document.createElement("img");
+            img.onload= function(){
+			
+				 var width = img.width;
+                 var height = img.height;
+                 w2 = width;
+                 h2 = height;
+				 
+				  if (width > height) {
+                     if (width > MAX_WIDTH) {
+                        h2 = height * MAX_WIDTH / width;
+                        w2 = MAX_WIDTH;
+                    }
+                 } else {
+                     if (height > MAX_HEIGHT) {
+                        w2 = width * MAX_HEIGHT / height;
+                        h2 = MAX_HEIGHT;
+                    }
+                }
+				
+				img_x = (MAX_WIDTH-w2)/2;
+				img_y = (MAX_HEIGHT-h2)/2;
+				
+				crop_x  =(MAX_WIDTH-crop_width)/2;
+				crop_y  =(MAX_HEIGHT-crop_height)/2;
+				 
+				 canvas.width = MAX_WIDTH;
+                 canvas.height = MAX_HEIGHT;
+				 ctx = canvas.getContext("2d");
+				 
+				document.body.innerHTML += "<button onclick='decreaseSize()'>decrease size</button>"
+				 + "<button onclick='increaseSize()'>increase size</button>"
+				  + "<button onclick='crop()'>crop</button>"
+				/* + "<button onclick='moveLeft()'>move left</button>"
+				 + "<button onclick='moveRight()'>move right</button>"
+				 + "<button onclick='moveUp()'>move up</button>"
+				 + "<button onclick='moveDown()'>move down</button>"*/
+				 + "<br />Use arrow keys to move image"
+				 + "<br /><div id='output' onchange='output_changed()' style='display: block'>"
+       			 +		 "<select id='iphoneOrAndroid'>"
+				 +			"<option value='default'>choose output</option>"
+            	 +			"<option value='Android'>Android</option>"
+           		 +			"	<option value='iPhone'>iPhone</option>"
+        		 +		"</select>"
+    			 +	"</div>";
+				
+				
+				drawCanvas();
+				 
+				 
+              /*  ctx.drawImage(img, 0, 0, w2, h2);
+                var base64St = canvas.toDataURL("image/png");
+                document.getElementById("imagePreview").src = base64St;
+                document.getElementById("imagePreview").style.height = MAX_HEIGHT + "px";
+                document.getElementById("imagePreview").style.width= MAX_WIDTH + "px";*/
+            }
+            img.src = data;
+        };  
+        FR.readAsDataURL( file.files[0] );
+   }
+}
+
+function output_changed(){
+	var sel = document.getElementById('iphoneOrAndroid');
+    outputSizes = sel.options[sel.selectedIndex].value;
+		
+	
+	
+}
+
+document.onkeydown = checkKey;
+
+function checkKey(e){
+	e = e || window.event;
+	
+	if(e.which == '38'){ // 38 is the keycode for the up arrow
+		  moveUp();
+	}
+	else if(e.which == '40'){ //down arrow
+		moveDown();
+	}
+	else if(e.which == '37') { //left arrow
+		moveLeft();
+	}
+	else if(e.which == '39'){// right arrow
+		moveRight();
+	}
+}
+
+var clicking = false;
+$(document).mousedown(function(){
+	var x = event.x + $(window).scrollLeft();
+	var y = event.y + $(window).scrollTop();
+	
+	var imP = document.getElementById("imagePreview");
+	
+	x -= imP.offsetLeft;
+	y -= imP.offsetTop;
+	
+	if(x > 0 && x < imP.width && y > 0 && y < imP.height){
+		clicking = true;	
+	}
+	
+});
+$(document).mouseup(function(){
+	clicking = false;
+});
+$(document).mousemove(function(){
+	if(clicking == false){ return; }
+	
+	var x = event.x + $(window).scrollLeft();
+	var y = event.y + $(window).scrollTop();
+	
+	var imP = document.getElementById("imagePreview");
+	
+	x -= imP.offsetLeft;
+	y -= imP.offsetTop;
+	
+	resizeImage(x, y);
+	
+});
+
+function resizeImage( x, y){
+	 var centerX = img_x + (w2 /2);
+	 var centerY = img_y + (h2/2);
+	 
+	 var distX = centerX - x;
+	 //console.log(distX);
+	 if(x < centerX){ img_x = x; }
+	 else{  img_x = centerX - distX; }
+	  w2 = distX * 2;
+	  
+	/* var distY = centerY - y;
+	 if(y < centerY){ img_y = y; }
+	 else{  img_y = centerY - distY; }
+	  h2 = distY * 2;*/
+	  h2 = w2 * (img.height / img.width);
+	  img_y = centerY - (h2 /2);
+	  
+	  drawCanvas();
+	  
+}
+
+</script>
+
+</head>
+
+<body>
+  <input type="file" name="uploadImage" id="uploadImage" onChange="imageUploaded()">
+  <img draggable="false" id="imagePreview">
+</body>
+
+
+</html>
